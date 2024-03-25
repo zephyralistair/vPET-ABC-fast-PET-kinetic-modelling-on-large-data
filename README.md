@@ -39,6 +39,7 @@ All user defined parameters are in the `main()` function. A few examples are lis
 | `input_compressed`    | Flag indicating whether the input data is compressed (hdf5/csv). Note that if the input data is an HDF5 file, the key used should be "df".                            |
 | `output_compressed`   | Flag indicating whether to compress the output posteriors (hdf5/csv). Note that the model probability posterior is always stored as a csv, as it is relatively small. |
 | `prior distributions` | Priors distributions of all parameters.                                                                                                                               |
+
 The input data must follow certain structure, an example for the FDG compartment model is shown below:
 
 | frame_length | Ti       | Cb         | 0        | 1        | 2        |
