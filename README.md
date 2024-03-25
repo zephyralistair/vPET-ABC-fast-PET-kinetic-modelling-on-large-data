@@ -45,6 +45,7 @@ The input data must follow certain structure, an example for the FDG compartment
 | ------------ | -------- | ---------- | -------- | -------- | -------- |
 | 0            | 0        | 0.632698   | 0.067708 | 0.088833 | 0.104963 |
 | 0.166667     | 0.166667 | 140.588500 | 0.097631 | 0.073734 | 0.051241 |
+
 where frame_length is the length of the scan frame, Ti is the scan time from injection, Cb is the whole blood input function. Numbers starting from 0 are voxels, storing the corresponding time activity curves.
 #### Models
 If you wish to create your own models, take a look at function `generate_FDG_models()`. Certain modifications in other functions maybe needed as well, if they involve parameters or i/o. Refer to comments in the code for more details.
