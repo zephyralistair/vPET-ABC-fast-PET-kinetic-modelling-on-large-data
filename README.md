@@ -1,7 +1,7 @@
 # ABC-for-Voxelwise-Kinetic-Modeling
 
 ## Implementation
-This code attempts to use a NVIDIA GPU to run the vPET-ABC on FDG compartment models. The implementation focuses on avoiding for-loops via vectorisations and broadcasting, accelerating computation speed via GPU automated parallelisation, and voxelwisely handling large dataset such as total body PET scans with over 44 million voxels. It's currently at least 61-fold faster than the original R code under the same hardware.
+This code attempts to use a NVIDIA GPU to accelerate the vPET-ABC on FDG compartment models. The implementation focuses on avoiding for-loops via vectorisations and broadcasting, accelerating computation speed via GPU automated parallelisation, and voxelwisely handling large dataset such as total body PET scans with over 44 million voxels. It's currently at least 61-fold faster than the original R code under the same hardware.
 
 GPU implementation relies on the Python module CuPy. Large posterior outputs are currently compressed as HDF5s.
 ## Usage
