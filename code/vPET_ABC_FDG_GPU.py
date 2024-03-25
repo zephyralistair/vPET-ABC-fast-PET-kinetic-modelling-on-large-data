@@ -468,7 +468,7 @@ def main():
     If input data is an HDF5 file, the key should be "df".
     """
 
-    path_data = "sample_data.csv"
+    path_data = "../data/sample_data.csv"
     path_output_para = "parameters.csv"
     path_output_model = "model.csv"
 
