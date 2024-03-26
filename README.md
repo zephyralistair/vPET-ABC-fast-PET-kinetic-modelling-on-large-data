@@ -42,10 +42,10 @@ All user defined parameters are in the `main()` function. A few examples are lis
 
 The input data must follow certain structure, an example for the FDG compartment model is shown below:
 
-| frame_length | Ti       | Cb         | 0        | 1        | 2        |
-| ------------ | -------- | ---------- | -------- | -------- | -------- |
-| 0            | 0        | 0.632698   | 0.067708 | 0.088833 | 0.104963 |
-| 0.166667     | 0.166667 | 140.588500 | 0.097631 | 0.073734 | 0.051241 |
+| frame_length | Ti         | Cb         | 0           | 1           | 2           |
+| ------------ | ---------- | ---------- | ----------- | ----------- | ----------- |
+| 0            | 0.133333333| 0.632698   | 0.040760215 | 0.036601037 | 0.028408282 |
+| 0.166667     | 0.35       | 140.588500 | 18.177458   | 17.420736   | 16.563547   |
 
 where frame_length is the length of the scan frame, Ti is the scan time from injection, Cb is the whole blood input function. Numbers starting from 0 are voxels, storing the corresponding time activity curves.
 #### Models
