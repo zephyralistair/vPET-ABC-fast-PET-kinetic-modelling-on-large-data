@@ -18,7 +18,7 @@ This code has been tested on Ubuntu, CentOS 6 (USYD Artemis) and Windows 11. A C
 1. Install a Python environment (>=3.9.15).
 2. Install the latest NVIDIA graphic card driver.
 3. Install a specific version of the CUDA Toolkit (>=10.0.130, must be compatible with your GPU driver version, see https://docs.nvidia.com/deploy/cuda-compatibility/).
-4. Install the corresponding version of CuPy (e.g. CuPy 12.2.0 for CUDA 10.0.130, see https://docs.cupy.dev/en/stable/install.html. Ideally ,your Cupy version should be >= 12.2.0, as some methods were not implemented in earlier versions..
+4. Install the corresponding version of CuPy (e.g. CuPy 12.2.0 for CUDA 10.0.130, see https://docs.cupy.dev/en/stable/install.html. Ideally ,your Cupy version should be >= 12.2.0, as some methods were not implemented in earlier versions.)
 5. Check if you have the latest compatible `pandas`, `numpy`, `scipy`, `tqdm`, `pytables` installed.
 6. If you are working on HPCs, certain dependencies might need manual compilation, depending on your environment.
 ### User Defined Parameters & Models
