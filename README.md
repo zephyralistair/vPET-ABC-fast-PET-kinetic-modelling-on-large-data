@@ -51,7 +51,7 @@ where frame_length is the length of the scan frame, Ti is the scan time from inj
 #### Models
 If you wish to create your own models, take a look at function `generate_FDG_models()`. Certain modifications in other functions maybe needed as well, if they involve parameters or i/o. Refer to comments in the code for more details.
 ## Future Directions
-1. Future improvements could include optimizing data transfers between the GPU and the CPU, especially if CuPy implements the `scipy.signal.convolve()` function. Meanwhile, we might consider migrating to JAX for better performance.
+1. Future improvements could include optimising data transfers between the GPU and the CPU, especially if CuPy implements the `scipy.signal.convolve()` function. Meanwhile, we might consider migrating to JAX for better performance.
 2. A better data storage method might be to use a database, which is more time-efficient than HDF5, but not necessarily in space. Databases may potentially solve the i/o bottleneck currently deteriorating the program speed significantly when the dataset is gigantic.
 3. Implementation of other kinetic models is on the way.
 ### Common Issues
