@@ -300,7 +300,7 @@ def get_FDG_Ct(time_frame_size, Cb, Ca, Ti, paras):
     Cb_cumsum = cp.cumsum(Cb, axis = -1)
 
     Ct = cumconv((theta1 * cp.exp(-alpha1 * Ti) + theta2 * cp.exp(-alpha2 * Ti)), 
-                 Ca, time_frame_size) + Vb * Cb + Kb * Cb_cumsum * time_frame_size
+                 Ca, time_frame_size) + Vb * Cb + Vb * Kb * Cb_cumsum * time_frame_size
 
     return Ct
 
