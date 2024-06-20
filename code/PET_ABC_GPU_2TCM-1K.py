@@ -13,11 +13,8 @@
 // SPECIAL NOTES:
 // ===============================
 // Change History:
-// 17/04/2024 - Qinlin (Alistair) Gu - Added other distance functions, and 
-//                                     validation mode.
-// 15/04/2024 - Qinlin (Alistair) Gu - Correction for discrete convolution 
-//                                     approximation errors.
-// 26/03/2024 - Qinlin (Alistair) Gu - Initial creation of the header.
+// 20/06/2024 - Qinlin (Alistair) Gu - Copied from the 2TCM version and modified
+//                                     for the 1K version.
 ==================================
 """
 
@@ -87,8 +84,8 @@ def output_file_init(path_output_para, path_output_model, write_paras, output_co
                                   probability posterior is always stored as a csv
                                   as it is relatively small.
     """
-    para_columns = ["Voxel_No", "Vb", "K_1", "k_2", 
-                    "k_3", "k_4", "K_i", "model"]
+    para_columns = ["Voxel_No", "V_b", "K_1", "k_2", 
+                    "k_3", "k_4", "K_b", "V_T", "model"]
     num_of_columns = len(para_columns)
     model_p_columns = ["Voxel_No", "model", "probability_of_model"]
 
@@ -141,28 +138,31 @@ def output_dataframe(para, model_p, write_paras):
         ## We have alpha1 alpha2 theta1 theta2
         ## We need K_1 k_2 k_3 k_4
 
-        Vb = para_df.iloc[:, 1]
+        V_b = para_df.iloc[:, 1]
         alpha1 = para_df.iloc[:, 2]
         alpha2 = para_df.iloc[:, 3]
         theta1 = para_df.iloc[:, 4]
         theta2 = para_df.iloc[:, 5]
-        models = para_df.iloc[:, 6]
+        K_b = para_df.iloc[:, 6]
+        models = para_df.iloc[:, 7]
 
-        K_1 = (theta1 + theta2) / (1 - Vb)
+        K_1 = (theta1 + theta2) / (1 - V_b)
         k_2 = (theta1 * alpha1 + theta2 * alpha2) / (theta1 + theta2)
         k_4 = alpha1 * alpha2 / k_2
         k_3 = alpha1 + alpha2 - k_2 - k_4
-        K_i = K_1 * k_3 / (k_2 + k_3)
+        V_T = K_1 / k_2 * (1 + k_3 / k_4)
+        # K_i = K_1 * k_3 / (k_2 + k_3)
 
         para_df.iloc[:, 2] = K_1
         para_df.iloc[:, 3] = k_2
         para_df.iloc[:, 4] = k_3
         para_df.iloc[:, 5] = k_4
-        para_df.insert(6, "K_i", K_i)
-        para_df.iloc[:, 7] = models
+        para_df.iloc[:, 6] = K_b
+        para_df.insert(7, "V_T", V_T)
+        para_df.iloc[:, 8] = models
 
-        para_df.iloc[:, -1] = para_df.iloc[:, -1].replace({0: 'k4 zero', 
-                                                           1: 'k4 non-zero'})
+        para_df.iloc[:, -1] = para_df.iloc[:, -1].replace({0: '2TCM', 
+                                                           1: '2TCM-1K'})
     else:
         para_df = None
 
@@ -172,8 +172,8 @@ def output_dataframe(para, model_p, write_paras):
     model_p_df.iloc[:, 2] = np.where(model_p_df.iloc[:, 1] == 1, 
                                      1 - model_p_df.iloc[:, 2], 
                                      model_p_df.iloc[:, 2])
-    model_p_df.iloc[:, 1] = model_p_df.iloc[:, 1].replace({0: 'k4 zero', 
-                                                           1: 'k4 non-zero'})
+    model_p_df.iloc[:, 1] = model_p_df.iloc[:, 1].replace({0: '2TCM', 
+                                                           1: '2TCM-1K'})
 
     return para_df, model_p_df
 
@@ -198,8 +198,8 @@ def write_csv_chunks(para_df,
                                   as it is relatively small.
     """
     if write_paras:
-        para_columns = ["Voxel_No", "Vb", "K_1", "k_2", 
-                        "k_3", "k_4", "K_i", "model"]
+        para_columns = ["Voxel_No", "V_b", "K_1", "k_2", 
+                        "k_3", "k_4", "K_b", "V_T", "model"]
         num_of_columns = len(para_columns)
         para_df.columns = para_columns
 
@@ -296,9 +296,11 @@ def get_FDG_Ct(time_frame_size, Cb, Ca, Ti, paras):
     Returns:
         cp.ndarray: FDG model TACs, shaped as the return value of cumconv.
     """
-    Vb, alpha1, alpha2, theta1, theta2, model = [row for row in paras]
+    Vb, alpha1, alpha2, theta1, theta2, Kb, model = [row for row in paras]
+    Cb_cumsum = cp.cumsum(Cb, axis = -1)
+
     Ct = cumconv((theta1 * cp.exp(-alpha1 * Ti) + theta2 * cp.exp(-alpha2 * Ti)), 
-                 Ca, time_frame_size) + Vb * Cb
+                 Ca, time_frame_size) + Vb * Cb + Kb * Cb_cumsum * time_frame_size
 
     return Ct
 
@@ -352,7 +354,7 @@ def distance_function(M, Ct, distance_type, validation_mode=False,
         M (cp.ndarray): FDG model TACs using the prior simulations.
             (num_vox, num_prior_simulation_size, num_time_frame)
         Ct (cp.ndarray): TAC chunks.
-            (num_time_frame, num_vox)
+            (num_vox, 1, num_time_frame)
         distance_type (str): Type of distance function to use. Options are:
             "L1", "L2", "Cauchy", "Huber", "Welsch", "CvM".
             L1: L1 distance. L1 norm is the sum of the absolute values of the 
@@ -454,7 +456,7 @@ def calculate_results(M, par_mat, Ct, S, thresh, write_paras,
             probabilities.
     """
     num_vox = Ct.shape[-1]
-    num_variable = 6
+    num_variable = 7
 
     voxel_numbers = cp.arange(num_vox) + vox_num_start
 
@@ -721,9 +723,9 @@ def main():
 
     If input data is an HDF5 file, the key should be "df".
     """
-    path_data = "data_coronal_275.h5"
-    path_output_para = "parameters.h5"
-    path_output_model = "model.h5"
+    path_data = "sample_data.csv"
+    path_output_para = "parameters.csv"
+    path_output_model = "model.csv"
 
     seed = 2023
     cp.random.seed(seed) ## for reproducibility
@@ -735,37 +737,22 @@ def main():
     model_0_prob_thres = 0.5 ## threshold for model 0 probability
     num_voxel = None ## number of voxels to process. If None, all voxels are
     write_paras = True ## flag indicating whether to write parameter posterior
-    input_compressed = True ## flag indicating whether the input data is compressed (hdf5/csv)
-    output_compressed = True
+    input_compressed = False ## flag indicating whether the input data is compressed (hdf5/csv)
+    output_compressed = False
     ## flag indicating whether to compress the output 
     ## posteriors (hdf5/csv). Note that the model 
     ## probability posterior is always stored as a csv initially
     ## as it is relatively small, but can be compressed if needed.
     finer_t_size = 500 ## finer time frame size for smaller convolution error
                        ## bigger values require more vram
-    distance_type = "L2" ## distance function to use
+    distance_type = "L1" ## distance function to use
     ## 
     validation_mode = False ## flag indicating whether to use validation mode
 
-    # Vb = cp.random.uniform(0, 0.1, S)
-    # alpha1 = cp.random.uniform(0.0005, 0.015, S)
-    # alpha2 = cp.random.uniform(0.06, 0.6, S)
-    # theta1 = cp.random.uniform(0, 0.1, S)
-    # theta2 = cp.random.uniform(0, 0.1, S)
-    # model = cp.random.binomial(1, 0.5, S) ## 0 for k4 zero, 1 for k4 non-zero
-    # alpha1[model == 0] = 0 ## if k4 zero, alpha1 is 0
-    ## Priors:
-    ## Vb (cp.ndarray): Vb prior simulation values.
-    ## alpha1 (cp.ndarray): alpha1 prior simulation values.
-    ## alpha2 (cp.ndarray): alpha2 prior simulation values.
-    ## theta1 (cp.ndarray): theta1 prior simulation values.
-    ## theta2 (cp.ndarray): theta2 prior simulation values.
-    ## model (cp.ndarray): Model prior simulation values.
-
-    ## Try bigger priors
     par_mat = None
     if validation_mode:
-    ## If validation mode is on, try to load the models to save computation time
+    ## If validation mode is on, try to load precomputed models to save 
+    ## computation time
         try:
             par_mat = cp.load("parameter_matrix.npz")["par_mat"]
             print("Priors loaded...")
@@ -777,10 +764,11 @@ def main():
         alpha2 = cp.random.uniform(0.06, 1, S)
         theta1 = cp.random.uniform(0, 0.5, S)
         theta2 = cp.random.uniform(0, 0.5, S)
+        Kb = cp.random.uniform(0, 0.9, S) ## 0.263±0.134, take 3 sds
         model = cp.random.binomial(1, 0.5, S)
-        alpha1[model == 0] = 0
+        Kb[model == 0] = 0
 
-        par_mat = cp.column_stack((Vb, alpha1, alpha2, theta1, theta2, model))
+        par_mat = cp.column_stack((Vb, alpha1, alpha2, theta1, theta2, Kb, model))
         ## stacked as input
         cp.savez_compressed("parameter_matrix", par_mat = par_mat)
         print("Priors generated...")
