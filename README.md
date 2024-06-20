@@ -21,6 +21,8 @@ This code has been tested on Ubuntu, CentOS 6 (USYD Artemis) and Windows 11. A C
 4. Install the corresponding version of CuPy (e.g. CuPy 12.2.0 for CUDA 10.0.130, see https://docs.cupy.dev/en/stable/install.html. Ideally ,your Cupy version should be >= 12.2.0, as some methods were not implemented in earlier versions.).
 5. Check if you have the latest compatible `pandas`, `numpy`, `scipy`, `tqdm`, `pytables` installed.
 6. If you are working on HPCs, certain dependencies might require manual compilation, depending on your environment.
+
+A sample dataset is provided for the 2TCM model, to test the sucessful configuration.
 ### User Defined Parameters & Models
 To use the code, you may modify the parameters and run `python name_of_the_code.py`.
 #### Parameters
