@@ -1,5 +1,8 @@
 # ABC-for-Voxelwise-Kinetic-Modeling
 
+## Latest Update
+Added a module using JAX as backend allowing easier usage.
+
 ## Implementation
 This code attempts to use a NVIDIA GPU to accelerate the vPET-ABC on FDG compartment models, described in [this paper](https://iopscience.iop.org/article/10.1088/1361-6560/abfa37). The implementation focuses on avoiding for-loops via vectorisations and broadcasting, accelerating computation speed via GPU automated parallelisation, and voxelwisely handling large dataset such as total body PET scans with over 44 million voxels in chunks. It's currently at least 61-fold faster than the [original R code](https://github.com/cgrazian/PETabc) under the same hardware.
 
