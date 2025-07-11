@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod ## abstract base class
 from functools import partial
 from typing import Callable, Tuple, Protocol
 from tqdm.auto import tqdm
-import math
 
 import jax
 import jax.numpy as jnp
