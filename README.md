@@ -1,4 +1,4 @@
-# ABC-for-Voxelwise-Kinetic-Modeling
+# vPET-ABC, Fast PET Kinetic Modelling on Large Data
 
 ## Latest Update
 Added a module using JAX as backend allowing easier usage.
