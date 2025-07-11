@@ -27,6 +27,7 @@ class KineticModel(ABC):
         """Forward model for a *single* parameter vector."""
 
     # Batch version is shared and fully vectorised
+    @partial(jax.jit, static_argnums=(0,))
     def batch_simulate(self,
                        params: jnp.ndarray,
                        Cp_fine: jnp.ndarray,
@@ -55,6 +56,7 @@ class TwoTissueModel(KineticModel):
 
     param_names = ('K1', 'k2', 'k3', 'k4', 'Vb', 'M')
 
+    @partial(jax.jit, static_argnums=(0,))
     def simulate(self,
                  params: jnp.ndarray,
                  Cp:     jnp.ndarray,
@@ -99,7 +101,7 @@ class lpntPETModel(KineticModel):
 
     param_names = ('R1', 'k2', 'k2a', 'gamma', 'tD', 'tP', 'alpha', 'M')
 
-    # -----------------------------------------------------------------
+    @partial(jax.jit, static_argnums=(0,))
     def simulate(self,
                  params: jnp.ndarray,
                  Cr:     jnp.ndarray,      # reference region TAC
@@ -181,7 +183,7 @@ class ABCRejection:
         best_th = jnp.empty((k, P, V))
 
     # -----------------------------------------------------------------
-    # JIT-compiled single pass
+    # JIT-compiled
     # -----------------------------------------------------------------
         @partial(jax.jit, static_argnums=(0, 2))
         def _chunk(self, key, n):
@@ -216,7 +218,7 @@ class ABCRejection:
 
 
 # ---------------------------------------------------------------------
-# 4.  Preprocessing function for PET data
+# 4.  Preprocessing function
 # ---------------------------------------------------------------------
 def preprocess_table(df: pd.DataFrame,
                     dt_fine: float = 0.5
@@ -265,7 +267,7 @@ def preprocess_table(df: pd.DataFrame,
 
 
 # ---------------------------------------------------------------------
-# 5.  Post processing function
+# 5.  Postprocessing function
 # ---------------------------------------------------------------------
 @jax.jit
 def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
@@ -290,7 +292,7 @@ def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.n
     return ret, target
 
 # ---------------------------------------------------------------------
-# 6.  Example prior (uniform box) and minimal demo
+# 6.  Priors
 # ---------------------------------------------------------------------
 def TwoTissuePrior(
         key: jr.KeyArray, 
