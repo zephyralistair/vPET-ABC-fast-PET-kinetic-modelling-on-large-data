@@ -268,7 +268,7 @@ def get_Ct(time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum_neg, Ti, paras):
     mask_shape = cp.broadcast(cp.empty(Ct.shape, dtype = cp.float16), 
                               cp.empty(ht.shape, dtype = cp.float16)).shape
     model_mask = cp.broadcast_to(model_mask, mask_shape)
-    Ct_ht = cp.where(model_mask, 0, -cp.cumsum(Ct * ht, axis = -1))
+    Ct_ht = cp.where(model_mask, 0, -cp.cumsum(Ct * ht * time_frame_size, axis = -1))
 
     target_shape = Ct_ht.shape
 
@@ -279,9 +279,9 @@ def get_Ct(time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum_neg, Ti, paras):
 
     # Now stack them along the fourth dimension
     BigMat = cp.stack((Cr_broadcasted, 
-                       Cr_cumsum_broadcasted * time_frame_size, 
-                       Ct_cumsum_neg_broadcasted * time_frame_size, 
-                       Ct_ht * time_frame_size), 
+                       Cr_cumsum_broadcasted, 
+                       Ct_cumsum_neg_broadcasted, 
+                       Ct_ht), 
                        axis = -1)
 
     bigmat_shape = BigMat.shape
@@ -529,7 +529,7 @@ def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S,
     else:
         df = pd.read_csv(path_data)
     time_frame_size, Cr, Ti = extract_values(df)
-    Cr_cumsum = cp.cumsum(Cr, axis = 0)
+    Cr_cumsum = cp.cumsum(Cr * time_frame_size, axis = 0)
     print("Data extracted...")
 
     index = 3 ## ignoring the first 3 columns
@@ -558,7 +558,7 @@ def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S,
             break
 
         Ct = extract_TAC_chunks(df, index, chunk_size, num_voxel)
-        Ct_cumsum = cp.cumsum(Ct, axis = 0)
+        Ct_cumsum = cp.cumsum(Ct * time_frame_size, axis = 0)
         M = generate_models(
             time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum, Ti, par_mat
         )
