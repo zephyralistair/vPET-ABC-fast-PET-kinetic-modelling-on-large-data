@@ -22,6 +22,7 @@ import cupy as cp
 import pandas as pd
 import numpy as np
 import os
+import time
 import warnings
 from tqdm import tqdm
 
@@ -265,8 +266,8 @@ def get_Ct(time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum_neg, Ti, paras):
     # if model == 0:
     model_mask = model_mask[None, :, None]
     theta[:, :, -1, :][model_mask] = 0
-    mask_shape = cp.broadcast(cp.empty(Ct.shape, dtype = cp.float16), 
-                              cp.empty(ht.shape, dtype = cp.float16)).shape
+    mask_shape = cp.broadcast(cp.empty(Ct.shape, dtype = cp.float32), 
+                              cp.empty(ht.shape, dtype = cp.float32)).shape
     model_mask = cp.broadcast_to(model_mask, mask_shape)
     Ct_ht = cp.where(model_mask, 0, -cp.cumsum(Ct * ht * time_frame_size, axis = -1))
 
@@ -402,6 +403,8 @@ def distance_function(M, Ct, distance_type, validation_mode=False,
             N * cp.sum(cp.square(ranks_Ct - j_list), axis = -1)
         errors = U / (M * N * (M + N)) - (4 * M * N - 1) / (6 * (M + N))
         errors = errors + cp.random.normal(0, 0.0001, errors.shape)
+    # elif distance_type == "normalised_L1":
+    #     errors = cp.sum(cp.abs(M - Ct) / cp.abs(Ct), axis = -1)
     else:
         return distance_function(M, Ct, "L1")
 
@@ -466,6 +469,9 @@ def calculate_results(M, par_mat, Ct, S, thresh, write_paras,
     par_mat = cp.broadcast_to(par_mat, par_mat_broadcast_shape)
     ## to repeat the par_mat for each voxel, for output purpose
     ## (num_vox, num_prior_simulation_size, num_variable)
+    accepted_errors = errors[accepted_mask]
+    accepted_errors = accepted_errors.reshape(num_vox, accepted_size)
+
     accepted_mask = cp.broadcast_to(accepted_mask[:, :, None], 
                                     par_mat_broadcast_shape)
     ## mask was (num_vox, num_prior_simulation_size)
@@ -478,26 +484,20 @@ def calculate_results(M, par_mat, Ct, S, thresh, write_paras,
     ## Errors will happen if accepted_size is different for different voxels
     ## Potential risky distance functions include those using ranks
 
-    models = accepted[:, :, -1] ## (num_vox, accepted_size)
-                                ## array of models accepted for each voxel
-    percentage_zeros = cp.mean(models == 0, axis = -1) ## along accepted_size axis
-    models = (percentage_zeros < model_0_prob_thres).astype(cp.int32)
-    model_p = cp.column_stack((voxel_numbers, models, percentage_zeros))
-    model_p = model_p.get()
+    # models = accepted[:, :, -1] ## (num_vox, accepted_size)
+    #                             ## array of models accepted for each voxel
+    # percentage_zeros = cp.mean(models == 0, axis = -1) ## along accepted_size axis
+    # models = (percentage_zeros < model_0_prob_thres).astype(cp.int32)
+    # model_p = cp.column_stack((voxel_numbers, models, percentage_zeros))
 
-    if write_paras:
-        accepted = accepted.reshape(num_vox * accepted_size, num_variable)
-        voxel_numbers = voxel_numbers.repeat(accepted_size)
-        accepted = cp.column_stack((voxel_numbers, accepted))
-        accepted = accepted.get()
-    else:
+    if not write_paras:
         accepted = None
 
-    return accepted, model_p
+    return accepted, accepted_errors
 
 def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S, 
          thresh, model_0_prob_thres, write_paras, input_compressed=False, 
-         output_compressed=False, chunk_size=25, finer_t_size=1000, 
+         output_compressed=False, chunk_size=25, 
          distance_type="L1", validation_mode=False, hyperparameter=None):
     """
     Performs the vABC (Variational Approximate Bayesian Computation) algorithm.
@@ -536,6 +536,12 @@ def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S,
               ## which are for time_frame_size, Cb, and Ti
     df_column_size = df.shape[1] ## number of columns in the DataFrame
 
+    if thresh < 0.01:
+        par_chunk_num = 1000
+    else:
+        par_chunk_num = 1
+    chunked_par_mat = cp.array_split(par_mat, par_chunk_num, axis = 0)
+
     output_file_init(
         path_output_para, 
         path_output_model, 
@@ -552,26 +558,109 @@ def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S,
     total_iterations = min(num_voxel, df_column_size - 3) / chunk_size
     total_iterations = int(total_iterations) if total_iterations.is_integer() else int(total_iterations) + 1
 
+    voxel_timing = []  # To store the time for each voxel or batch
+    gpu_start_event = cp.cuda.Event()
+    gpu_end_event = cp.cuda.Event()
+
     for _ in tqdm(range(total_iterations)):
         ## batching to prevent memory overflow
         if index >= df_column_size or index >= num_voxel + 3:
             break
 
+        # Start the CPU timer (wall clock time)
+        cpu_start_wall = time.time()
+        # Start the CPU timer (total CPU time for all cores)
+        cpu_start_process = os.times()
+        # Start the GPU timer
+        gpu_start_event.record()
+
         Ct = extract_TAC_chunks(df, index, chunk_size, num_voxel)
+        num_vox = Ct.shape[-1]
+        vox_num_start = index - 3
+        voxel_numbers = cp.arange(num_vox) + vox_num_start
         Ct_cumsum = cp.cumsum(Ct * time_frame_size, axis = 0)
-        M = generate_models(
-            time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum, Ti, par_mat
-        )
-        para, model_p = calculate_results(M, par_mat, Ct, S, thresh, write_paras, 
-                                          model_0_prob_thres, index - 3, 
-                                          distance_type = distance_type, 
-                                          validation_mode = validation_mode, 
-                                          hyperparameter = hyperparameter)
-        para_df, model_p_df = output_dataframe(para, model_p, write_paras)
+        
+        para_all = None
+        errors_all = None
+        for par_chunk in chunked_par_mat:
+            M = generate_models(
+                time_frame_size, Cr, Cr_cumsum, Ct, Ct_cumsum, Ti, par_chunk
+            )
+            para, errors = calculate_results(M, par_chunk, Ct, 
+                                             par_chunk.shape[0], 
+                                             thresh * par_chunk_num, write_paras, 
+                                             model_0_prob_thres, vox_num_start, 
+                                             distance_type = distance_type, 
+                                             validation_mode = validation_mode, 
+                                             hyperparameter = hyperparameter)
+            if errors_all is None:
+                para_all = para
+                errors_all = errors
+            else:
+                para_all = cp.concatenate((para_all, para), axis = 1)
+                errors_all = cp.concatenate((errors_all, errors), axis = 1)
+
+        h = cp.quantile(errors_all, 1 / par_chunk_num, axis = 1)
+        accepted_mask = errors_all <= h[:, None]
+        accepted_size = int(cp.count_nonzero(accepted_mask[0]))
+        par_mat_shape = para_all.shape
+        accepted_mask = cp.broadcast_to(accepted_mask[:, :, None], 
+                                        par_mat_shape)
+        accepted = para_all[accepted_mask]
+        accepted = accepted.reshape(par_mat_shape[0], accepted_size, par_mat_shape[-1])
+
+        models = accepted[:, :, -1] ## (num_vox, accepted_size)
+                                    ## array of models accepted for each voxel
+        percentage_zeros = cp.mean(models == 0, axis = -1) ## along accepted_size axis
+        models = (percentage_zeros < model_0_prob_thres).astype(cp.int32)
+        model_p = cp.column_stack((voxel_numbers, models, percentage_zeros))
+        model_p = model_p.get()
+
+        if write_paras:
+            accepted = accepted.reshape(par_mat_shape[0] * accepted_size, par_mat_shape[-1])
+            voxel_numbers = voxel_numbers.repeat(accepted_size)
+            accepted = cp.column_stack((voxel_numbers, accepted))
+            accepted = accepted.get()
+        else:
+            accepted = None
+
+        para_df, model_p_df = output_dataframe(accepted, model_p, write_paras)
         write_csv_chunks(para_df, model_p_df, path_output_para, path_output_model, 
                          write_paras, output_compressed)
         
         index += chunk_size
+
+        # Stop the GPU timer
+        gpu_end_event.record()
+        gpu_end_event.synchronize()  # Ensure all GPU tasks are done before timing
+        
+        # Stop the CPU timers
+        cpu_end_wall = time.time()
+        cpu_end_process = os.times()
+
+        # Calculate GPU time
+        gpu_elapsed_time_ms = cp.cuda.get_elapsed_time(gpu_start_event, gpu_end_event)
+        
+        # Calculate CPU wall clock time (real time elapsed)
+        cpu_elapsed_wall_time = cpu_end_wall - cpu_start_wall
+        
+        # Calculate total CPU time (user + system time) across all cores
+        cpu_elapsed_process_time = (
+            (cpu_end_process.user + cpu_end_process.system) -
+            (cpu_start_process.user + cpu_start_process.system)
+        )
+        
+        # Store the voxel processing time (both CPU and GPU)
+        voxel_timing.append({
+            "index": index - 3,
+            "cpu_wall_clock_time_sec": cpu_elapsed_wall_time,
+            "cpu_total_time_sec": cpu_elapsed_process_time,  # Total CPU time across all cores
+            "gpu_time_ms": gpu_elapsed_time_ms
+        })
+
+    # Save the voxel processing times to a CSV file
+    voxel_timing_df = pd.DataFrame(voxel_timing)
+    voxel_timing_df.to_csv("voxel_processing_times.csv", index=False)
 
     if output_compressed:
         print("Compressing the model output...")
@@ -602,19 +691,25 @@ def main():
 
     If input data is an HDF5 file, the key should be "df".
     """
-    path_data = "../Code from Clara/data/vABC_data_null.csv"
+    # path_data = "../Datasets_vPET-ABC/DigiMouse/Scale4/Voxel-wise-TACs-scale4-dif-time-vector_reformatted.csv"
+    # path_data = "../Datasets_vPET-ABC/DigiMouse/Scale1/Voxel-wise-TACs-scale1-wholeBrain_reformatted.csv"
+    # path_data = "../Datasets_vPET-ABC/DigiMouse/Scale1/Voxel-wise-TACs-scale1_reformatted.csv"
+    # path_data = "vABC_data_activation.csv"
+    path_data = "simulated_w_delays.csv"
+
+
     path_output_para = "parameters.csv"
     path_output_model = "model.csv"
 
-    seed = 2023
+    seed = 2024
     cp.random.seed(seed) ## for reproducibility
 
-    chunk_size = 2 ## Adjust as needed, to prevent memory overflow
+    chunk_size = 1 ## Adjust as needed, to prevent memory overflow
 
-    S = 2*10**6 ## number of prior simulations
-    thresh = 0.00029974212515947 ## threshold for acceptance
+    S = 1*10**8 ## number of prior simulations
+    thresh = 0.000001 ## threshold for acceptance
     model_0_prob_thres = 0.5 ## threshold for model 0 probability
-    num_voxel = 100 ## number of voxels to process. If None, all voxels are
+    num_voxel = None ## number of voxels to process. If None, all voxels are
     write_paras = True ## flag indicating whether to write parameter posterior
     input_compressed = False ## flag indicating whether the input data is compressed (hdf5/csv)
     output_compressed = False
@@ -637,14 +732,16 @@ def main():
         except FileNotFoundError:
             pass
     if par_mat is None:
+
         model = cp.random.binomial(1, 0.5, S)
-        R1 = cp.random.uniform(0.2, 1.7, S)
-        K2 = cp.random.uniform(0.1, 0.45, S)
-        K2a = cp.random.uniform(0, 0.1, S)
-        gamma = cp.random.uniform(0, 0.4, S)
-        tD = cp.random.uniform(30, 50, S)
-        tP = cp.random.uniform(tD + 1, 60, S)
+        R1 = cp.random.uniform(0.2, 1.6, S)
+        K2 = cp.random.uniform(0, 0.6, S)
+        K2a = cp.random.uniform(0, 0.2, S)
+        gamma = cp.random.uniform(0, 0.2, S)
+        tD = cp.random.uniform(25, 35, S)
+        tP = cp.random.uniform(tD + 1, 90, S)
         alpha = cp.random.uniform(0, 4, S)
+
         gamma[model == 0] = 0 ## model 0 for MRTM, model 1 for lp-nt
 
         par_mat = cp.column_stack((R1, K2, K2a, gamma, tD, tP, alpha, model))
