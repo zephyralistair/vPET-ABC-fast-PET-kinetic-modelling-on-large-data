@@ -50,7 +50,7 @@ class TwoTissueModel(KineticModel):
         dC₁/dt = K₁·Cp  − (k₂+k₃)·C₁ + k₄·C₂
         dC₂/dt = k₃·C₁ − k₄·C₂
         C_T(t) = C₁ + C₂ + v_b·Cp
-    Discretised with 4th order Runge-Kutta.  Pure JAX → XLA.
+    Discretised with 4th order explicit Runge-Kutta.  Pure JAX → XLA.
     """
 
     param_names = ('K1', 'k2', 'k3', 'k4', 'Vb', 'M')
@@ -102,7 +102,7 @@ class lpntPETModel(KineticModel):
     ----------
     R₁, k₂, k₂a, γ, t_D, t_P, α, M
 
-    All maths is done on a uniform grid of step dt (forward Euler).
+    All maths is done on a uniform grid of step dt (explicit Euler).
     The reference-region TAC C_r(t) is passed in via `Cp` for API symmetry.
     """
 
@@ -137,7 +137,7 @@ class lpntPETModel(KineticModel):
         # bundle per-time inputs for lax.scan
         inputs = jnp.stack([dCr, Cr, h], axis=1)         # (T, 3)
 
-        # ------------------------ Euler integration ------------------
+        # ------------------------ Explicit Euler ------------------
         def step(Ct_prev, inp):
             dCr_t, Cr_t, h_t = inp
             dCt = R1 * dCr_t + k2 * Cr_t - k2a * Ct_prev - gamma * Ct_prev * h_t
