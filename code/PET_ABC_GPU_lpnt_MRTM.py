@@ -578,7 +578,7 @@ def vABC(num_voxel, path_data, path_output_para, path_output_model, par_mat, S,
         num_vox = Ct.shape[-1]
         vox_num_start = index - 3
         voxel_numbers = cp.arange(num_vox) + vox_num_start
-        Ct_cumsum = cp.cumsum(Ct * time_frame_size, axis = 0)
+        Ct_cumsum = cp.cumsum(Ct * time_frame_size[:, None], axis = 0)
         
         para_all = None
         errors_all = None
