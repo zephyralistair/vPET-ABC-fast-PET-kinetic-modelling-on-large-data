@@ -50,7 +50,7 @@ class TwoTissueModel(KineticModel):
         dC₁/dt = K₁·Cp  − (k₂+k₃)·C₁ + k₄·C₂
         dC₂/dt = k₃·C₁ − k₄·C₂
         C_T(t) = C₁ + C₂ + v_b·Cp
-    Discretised with forward Euler for simplicity.  Pure JAX → XLA.
+    Discretised with 4th order Runge-Kutta.  Pure JAX → XLA.
     """
 
     param_names = ('K1', 'k2', 'k3', 'k4', 'Vb', 'M')
@@ -64,16 +64,24 @@ class TwoTissueModel(KineticModel):
         params = jnp.nan_to_num(params, nan=0.0, posinf=0.0, neginf=0.0)
         K1, k2, k3, k4, Vb, M = params
 
-        def step(state, Cp_t):
+        def deriv(state, Cp_t):
             C1, C2 = state
             dC1 = K1 * Cp_t - (k2 + k3) * C1 + k4 * C2
             dC2 = k3 * C1 - k4 * C2
-            C1_new = C1 + dC1 * dt
-            C2_new = C2 + dC2 * dt
-            Ct     = (1 - Vb) * (C1_new + C2_new) + Vb * Cp_t
-            return (C1_new, C2_new), Ct
+            return jnp.array([dC1, dC2])
+                     
+        def step(state, Cp_t):
+            C1, C2 = state
+            k1 = deriv(state, Cp_t)
+            k2 = deriv(state + 0.5 * dt * k1, Cp_t)
+            k3 = deriv(state + 0.5 * dt * k2, Cp_t)
+            k4 = deriv(state + dt * k3, Cp_t)
+            new_state = state + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
+            Ct = (1 - Vb) * (new_state[0] + new_state[1]) + Vb * Cp_t
+            return new_state, Ct
 
-        (_, _), Ct = jax.lax.scan(step, (0.0, 0.0), Cp)
+        init_state = jnp.array([0.0, 0.0])
+        _, Ct = jax.lax.scan(step, init_state, Cp)
         return Ct
     
 # ---------------------------------------------------------------------
