@@ -63,7 +63,7 @@ pip install vpet-abc
 pip install vpet-abc[cuda]
 ```
 
-`jax[cuda]` wheels already bundle matching CUDA/cuDNN libraries; you only need a driver on Linux / Windows. For TPU, Metal (macOS), or ROCm see the official  
+`jax[cuda]` wheels already bundle matching CUDA/cuDNN libraries; you only need a driver on Linux / Windows WSL. For TPU, Metal (macOS), or ROCm see the official  
 [JAX installation guide](https://github.com/google/jax#installation).
 
 ### 3.2  Tested environments
