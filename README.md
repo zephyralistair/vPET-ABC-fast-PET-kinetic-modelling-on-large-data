@@ -107,7 +107,7 @@ To run `preprocess_table()` your CSV **must be organised by rows** as follows:
 | **0** | Mid-frame time of each dynamic frame | `(F,)` |
 | **1** | Frame length | `(F,)` |
 | **2** | Input function ($C_p$) / reference TAC ($C_r$) | `(F,)` |
-| **3 – 3 + V−1** | One row per voxel TAC | `(V, F)` |
+| **3 to 3 + V−1** | One row per voxel TAC | `(V, F)` |
 
 > *F – number of frames,   V – number of voxels*
 
