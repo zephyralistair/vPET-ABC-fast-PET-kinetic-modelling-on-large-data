@@ -1,4 +1,4 @@
-# vPET-ABC-JAX  
+# vPET-ABC
 Fast, likelihood‑free PET kinetic modelling implemented in **JAX**
 
 ---
