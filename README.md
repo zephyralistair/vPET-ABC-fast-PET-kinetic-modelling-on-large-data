@@ -130,6 +130,7 @@ Batching, GPU kernels, and distance evaluation are handled automatically.
 ## 6 · Benchmarks
 
 *TBD*
+Current estimates believe inference on 4.4 million voxels for a simulation size of 10,000,000 takes no more than 2 hours on 4 A100 GPUs, and 11.8 hours on one V100 GPU.
 
 ---
 
