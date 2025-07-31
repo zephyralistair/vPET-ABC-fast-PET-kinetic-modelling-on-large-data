@@ -28,7 +28,7 @@ Compared with the earlier CuPy version, the JAX rewrite
 ├── example_usage.ipynb
 ├── pyproject.toml
 ├── README.md
-├── src/
+└── src/
     └── vpetabc/
         ├── __init__.py       # package namespace
         ├── engine.py         # ABC engine + helpers
