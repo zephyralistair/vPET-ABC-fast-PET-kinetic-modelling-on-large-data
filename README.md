@@ -100,6 +100,17 @@ post = engine.run(jr.PRNGKey(0), TACs, Cp_fine, A, batch_size=50_000)
 means, chosen = get_conditional_posterior_mean(post)
 ```
 
+To run `preprocess_table()` your CSV **must be organised by rows** as follows:
+
+| Row (0-based) | Purpose | Shape after `read_csv(..., index_col=0)` |
+|---------------|---------|------------------------------------------|
+| **0** | Mid-frame time of each dynamic frame | `(F,)` |
+| **1** | Frame length | `frame_len` | `(F,)` |
+| **2** | Input function ($C_p$) / reference TAC ($C_r$) | `(F,)` |
+| **3 – 3 + V−1** | One row per voxel TAC | `(V, F)` |
+
+> *F – number of frames,   V – number of voxels*
+
 ---
 
 ## 5 · Extending the framework
