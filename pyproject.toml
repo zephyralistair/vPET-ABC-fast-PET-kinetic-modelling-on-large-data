@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.24"]         # or "setuptools>=69" if you prefer
+build-backend = "hatchling.build"
+
+[project]
+name            = "vpet-abc"
+version         = "0.1.0"
+description     = "Fast likelihood-free PET kinetic modelling in JAX"
+readme          = "README.md"
+license         = {text = "MIT"}
+authors         = [{name = "Qinlin Gu", email = "qinlin@sydney.edu.au"}]
+requires-python = ">=3.9.2"
+
+dependencies = [
+    "jax>=0.4.30",
+    "pandas>=2.3.1",
+    "tqdm>=4.67.1"
+]
+
+[project.optional-dependencies]
+cuda = ["jax[cuda]"]                  # pip install vpet-abc[cuda]
+
+[project.urls]
+Homepage = "https://github.com/zephyralistair/vPET-ABC-fast-PET-kinetic-modelling-on-large-data"
+
+[tool.hatch.build]
+packages = ["src/vpetabc"]
