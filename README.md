@@ -98,7 +98,6 @@ engine = ABCRejection(
 
 post = engine.run(jr.PRNGKey(0), TACs, Cp_fine, A, batch_size=50_000)
 means, chosen = get_conditional_posterior_mean(post)
-print(means[:3])            # first 3 voxels
 ```
 
 ---
