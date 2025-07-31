@@ -70,8 +70,8 @@ pip install vpet-abc[cuda]
 
 | OS | Python | `jax` / `jaxlib` | Accelerator |
 |----|--------|------------------|-------------|
-| macOS 15.5 (arm64) | 3.11.12 | 0.6.1 (CPU) | Apple M2 |
-| Rocky Linux 8.10 | 3.9.2 | 0.4.30 [cuda12] | NVIDIA V100 |
+| macOS 15.5 (arm64) | 3.11.12 | 0.6.1 [CPU] | Apple M2 |
+| Rocky Linux 8.10 | 3.9.2 | 0.4.30 [cuda] | NVIDIA V100 |
 
 ---
 
