@@ -5,7 +5,7 @@ Fast, likelihood‑free PET kinetic modelling implemented in **JAX**
 
 ## 1 · What is this repository?
 
-`vpetabc` is a pure‑Python re‑implementation of the **vPET‑ABC** framework&nbsp;[(Grazian *et&nbsp;al.*, 2021)](https://ieeexplore.ieee.org/document/9875446/) for large‑scale dynamic PET kinetic modelling, written from the ground up in **[JAX](https://github.com/google/jax)**.
+`vpetabc` is a pure‑Python re‑implementation of the **vPET‑ABC** framework&nbsp;[(Grazian *et&nbsp;al.*, 2021)](https://ieeexplore.ieee.org/document/9875446/, peer-reviewed paper coming soon) for large‑scale dynamic PET kinetic modelling, written from the ground up in **[JAX](https://github.com/google/jax)**.
 
 Compared with the earlier CuPy version, the JAX rewrite
 
