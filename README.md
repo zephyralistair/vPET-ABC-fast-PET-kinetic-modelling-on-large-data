@@ -89,9 +89,14 @@ from vpetabc import *
 df = pd.read_csv("data/sample_2TCM.csv", index_col=0)
 Cp_fine, A, TACs, _ = preprocess_table(df)
 
+lower_bounds = jnp.array([0, 0, 0, 0, 0])
+upper_bounds = jnp.array([1, 1, 1, 1, 1])
+
 engine = ABCRejection(
     TwoTissueModel(),
     prior_sampler = TwoTissuePrior,
+    lower_bounds  = lower_bounds,
+    upper_bounds  = upper_bounds,
     num_sims      = 200_000,
     accept_frac   = 0.005,
 )
