@@ -76,5 +76,7 @@ def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.n
     mask = (last == target[:, None])[..., None]            # shape (V, k, 1)
 
     # --- 4. compute the mean of the selected rows -------------------------
-    ret = (arr * mask).mean(axis=1)                        # shape (V, P)
+    num = (arr * mask).sum(axis=1)                        # (V, P)
+    den = mask.sum(axis=1).astype(arr.dtype)              # (V, 1)
+    ret = num / den                                       # (V, P)
     return ret, target
