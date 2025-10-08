@@ -10,4 +10,4 @@ __all__ = [
     "TwoTissuePrior", "lpntPETPrior",
     "preprocess_table", "get_conditional_posterior_mean",
 ]
-__version__ = "0.1.2"
+__version__ = "0.1.3"

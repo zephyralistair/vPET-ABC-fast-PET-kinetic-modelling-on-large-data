@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name            = "vpet-abc"
-version         = "0.1.2"
+version         = "0.1.3"
 description     = "Fast likelihood-free PET kinetic modelling in JAX"
 readme          = "README.md"
 license         = {text = "MIT"}
