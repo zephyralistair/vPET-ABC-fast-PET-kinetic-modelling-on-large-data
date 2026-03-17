@@ -80,3 +80,11 @@ def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.n
     den = mask.sum(axis=1).astype(arr.dtype)              # (V, 1)
     ret = num / den                                       # (V, P)
     return ret, target
+
+def get_posterior_mean(arr: jnp.ndarray) -> jnp.ndarray:
+    """
+    Computes the posterior mean across all samples, ignoring model selection.
+    Or use it when there is only one model (no M column).
+    Returns an array of shape (V, P).
+    """
+    return arr.mean(axis=1)

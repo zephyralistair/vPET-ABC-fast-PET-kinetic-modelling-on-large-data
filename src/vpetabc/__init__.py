@@ -6,8 +6,8 @@ from .utilities import preprocess_table, get_conditional_posterior_mean
 
 __all__ = [
     "ABCRejection",
-    "KineticModel", "TwoTissueModel", "lpntPETModel",
-    "TwoTissuePrior", "lpntPETPrior",
-    "preprocess_table", "get_conditional_posterior_mean",
+    "KineticModel", "TwoTissueModel", "lpntPETModel", "OneTissueModel", "SRTMModel", "AATHModel",
+    "TwoTissuePrior", "lpntPETPrior", "OneTissuePrior", "SRTMPrior", "AATHPrior",
+    "preprocess_table", "get_conditional_posterior_mean", "get_conditional_posterior_mean"
 ]
-__version__ = "0.1.3"
+__version__ = "0.1.4"

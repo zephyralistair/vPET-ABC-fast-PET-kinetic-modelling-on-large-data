@@ -71,3 +71,68 @@ def lpntPETPrior(
     # ─── concatenate and return ─────────────────────────────────────────
     params = jnp.concatenate([base, ind], axis=1)        # (n, 8)
     return params
+
+def OneTissuePrior(
+        key: jr.KeyArray,
+        n: int,
+        lows: jnp.ndarray = jnp.array([0.0, 0.0]),   # [K1, k2]
+        highs: jnp.ndarray = jnp.array([1.5, 1.0])
+        ) -> jnp.ndarray:
+    """
+    Draws n samples of length-2:
+        [K1, k2]
+    Returns
+    -------
+    params : (n, 2)  jnp.ndarray
+    """
+    lows = jnp.asarray(lows)
+    highs = jnp.asarray(highs)
+
+    return jr.uniform(key, shape=(n, 2), minval=lows, maxval=highs)
+
+def SRTMPrior(
+    key,
+    n: int,
+    lows:  jnp.ndarray = jnp.array([0.0, 0.0, 0.0]),     # [R1, k2, BPnd]
+    highs: jnp.ndarray = jnp.array([2.0, 1.0, 10.0])     # sensible defaults; tune as needed
+) -> jnp.ndarray:
+    """
+    Draw n samples of length-3:
+        [R1, k2, BPnd]
+
+    Priors
+    ------
+    Independent Uniform(lows[i], highs[i]) for each parameter.
+
+    Returns
+    -------
+    params : (n, 3) jnp.ndarray
+    """
+
+    # Basic shape safety (helps catch silent broadcasting mistakes)
+    lows  = jnp.asarray(lows)
+    highs = jnp.asarray(highs)
+    assert lows.shape  == (3,)
+    assert highs.shape == (3,)
+
+    params = jr.uniform(key, shape=(n, 3), minval=lows, maxval=highs)
+    return params
+
+def AATHPrior(
+        key: jr.KeyArray,
+        n: int,
+        lows: jnp.ndarray = jnp.array([0., 0., 0., 0, 0.]),
+        highs: jnp.ndarray = jnp.array([1., 1., 0.2, 0.2, 0.1])
+        ) -> jnp.ndarray:
+    """
+    Draws n samples of length-5:
+        [K1, k2, F, Tc, td] (no model selection)
+
+    Returns
+    -------
+    params : (n, 5)  jnp.ndarray
+    """
+
+    key, sub_uniform = jr.split(key)
+    params = jr.uniform(sub_uniform, shape=(n, 5), minval=lows, maxval=highs)
+    return params
