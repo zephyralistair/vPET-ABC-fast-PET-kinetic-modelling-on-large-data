@@ -40,9 +40,9 @@ Compared with the earlier CuPy version, the JAX rewrite
 | Module | Description |
 |--------|-------------|
 | `engine.py` | `ABCRejection`, the fully vectorised, JIT‑compiled rejection‑ABC driver |
-| `models.py` | `KineticModel` base‑class + `TwoTissueModel`, `lpntPETModel` implementations |
-| `priors.py` | Uniform × Bernoulli prior samplers (`TwoTissuePrior`, `lpntPETPrior`) |
-| `utilities.py` | `preprocess_table`, `get_conditional_posterior_mean`, misc. helpers |
+| `models.py` | `KineticModel` base‑class + `TwoTissueModel`, `lpntPETModel`, `OneTissueModel`, `SRTMModel`, `AATHModel` implementations |
+| `priors.py` | Uniform × Bernoulli prior samplers (`TwoTissuePrior`, `lpntPETPrior`), or Uniform prior samplers with a single model (`OneTissuePrior`, `SRTMPrior`, `AATHPrior`)|
+| `utilities.py` | `preprocess_table`, `get_conditional_posterior_mean`, `get_posterior_mean` misc. helpers |
 
 ---
 
@@ -142,20 +142,13 @@ Batching, GPU kernels, and distance evaluation are handled automatically.
 
 ---
 
-## 6 · Benchmarks
+## 6 · Evaluations & Citation
 
-*TBD*
-Current estimates believe inference on 4.4 million voxels for a simulation size of 10,000,000 takes no more than 2 hours on 4 A100 GPUs, and 11.8 hours on one V100 GPU.
-
----
-
-## 7 · Citation
-
-*TBA soon.*
+See [arXiv](https://arxiv.org/abs/2603.14859).
 
 ---
 
-## 8 · Known Issues
+## 7 · Known Issues
 
 - Stale GPU allocations after an interrupted run: If a notebook-cell or script is killed part-way through execution, the CUDA context can remain resident, leaving most of the GPU memory “in use”.  Subsequent calls will then fail with “CUDA out of memory” even though no computation is running.
 Work-around: restart the Python/Jupyter kernel (or the entire Python process).  This releases the orphaned context and frees the GPU memory. A full system reboot is *not* required. This is a limitation of JAX + XLA.
