@@ -8,6 +8,6 @@ __all__ = [
     "ABCRejection",
     "KineticModel", "TwoTissueModel", "lpntPETModel", "OneTissueModel", "SRTMModel", "AATHModel",
     "TwoTissuePrior", "lpntPETPrior", "OneTissuePrior", "SRTMPrior", "AATHPrior",
-    "preprocess_table", "get_conditional_posterior_mean", "get_conditional_posterior_mean"
+    "preprocess_table", "get_conditional_posterior_mean", "get_posterior_mean"
 ]
-__version__ = "0.1.4"
+__version__ = "0.1.5"
