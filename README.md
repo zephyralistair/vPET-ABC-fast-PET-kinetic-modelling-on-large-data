@@ -152,7 +152,7 @@ See [arXiv](https://arxiv.org/abs/2603.14859).
 
 - Stale GPU allocations after an interrupted run: If a notebook-cell or script is killed part-way through execution, the CUDA context can remain resident, leaving most of the GPU memory “in use”.  Subsequent calls will then fail with “CUDA out of memory” even though no computation is running.
 Work-around: restart the Python/Jupyter kernel (or the entire Python process).  This releases the orphaned context and frees the GPU memory. A full system reboot is *not* required. This is a limitation of JAX + XLA.
-- Doesn't Support JAX-Metal yet. Will look into this issue.
+- Doesn't Support JAX-Metal yet.
 ---
 
 ## 9 · Licence
