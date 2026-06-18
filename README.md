@@ -22,10 +22,10 @@ Compared with the earlier CuPy version, the JAX rewrite
 ```
 .
 ├── data/
-│   ├── sample_2TCM.csv
-│   └── sample_lpntPET.csv
+│   ├── sample 2TCM.csv
+│   └── sample lpntPET.csv
 ├── dist/                     # wheels/sdists created by `python -m build`
-├── example_usage.ipynb
+├── example usage.ipynb
 ├── pyproject.toml
 ├── README.md
 └── src/
@@ -77,7 +77,7 @@ pip install vpet-abc[cuda]
 
 ## 4 · Quick start
 
-See **`example_usage.ipynb`** for an executable walkthrough, or run:
+See **`example usage.ipynb`** for an executable walkthrough, or run:
 
 ```python
 import jax
@@ -86,7 +86,7 @@ import jax.random as jr
 import pandas as pd
 from vpetabc import *
 
-df = pd.read_csv("data/sample_2TCM.csv", index_col=0)
+df = pd.read_csv("data/sample 2TCM.csv", header=None)
 Cp_fine, A, TACs, _ = preprocess_table(df)
 
 lower_bounds = jnp.array([0, 0, 0, 0, 0])
@@ -157,5 +157,5 @@ Work-around: restart the Python/Jupyter kernel (or the entire Python process).  
 
 ## 9 · Licence
 
-`vpetabc` is released under the MIT Licence (see `LICENCE`).  
+`vpetabc` is released under the MIT Licence (see `LICENSE`).
 The sample dataset is provided for non‑commercial research use only.

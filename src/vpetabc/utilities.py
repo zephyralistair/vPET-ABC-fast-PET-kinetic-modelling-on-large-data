@@ -10,13 +10,14 @@ import pandas as pd
 # ---------------------------------------------------------------------
 def preprocess_table(df: pd.DataFrame,
                      dt_fine: float = 0.5
-                    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+                    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """
     • df: rows exactly as specified above
     • returns
         Cp_fine   : (T_fine,)  – Cp sampled on the uniform fine grid
         A         : (F, T_fine) – frame-averaging sparse matrix (0/1 divided by n)
         tac_voxels: (V, F)     – all voxel TACs stacked
+        t_fine    : (T_fine,)  – uniform fine time grid
     """
     t_mid   = df.iloc[0].to_numpy(float)          # (F,)
     f_len   = df.iloc[1].to_numpy(float)          # (F,)
@@ -65,7 +66,7 @@ def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.n
     """
     # arr shape (V, k, P)  - voxel x samples x params
 
-    last = arr[..., -1] ## M column, shape (V, k)
+    last = arr[..., -1]  # M column, shape (V, k)
 
     # --- 2. decide, per slice, which value we want ------------------------
     # mean(last) > 0.5  → look for 1s
@@ -80,6 +81,7 @@ def get_conditional_posterior_mean(arr: jnp.ndarray) -> tuple[jnp.ndarray, jnp.n
     den = mask.sum(axis=1).astype(arr.dtype)              # (V, 1)
     ret = num / den                                       # (V, P)
     return ret, target
+
 
 def get_posterior_mean(arr: jnp.ndarray) -> jnp.ndarray:
     """

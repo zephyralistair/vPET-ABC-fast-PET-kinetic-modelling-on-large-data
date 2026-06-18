@@ -280,7 +280,7 @@ class AATHModel(KineticModel):
         """
         T = Cp.shape[0]
         t = jnp.arange(T) * dt
-        tq = t - td
+        tq = jnp.clip(t - td, 0.0, t[-1])
 
         # Convert tq to fractional indices
         fidx  = tq / dt
@@ -291,7 +291,6 @@ class AATHModel(KineticModel):
 
         Cp0 = jnp.take(Cp, idx0)
         Cp1 = jnp.take(Cp, idx1)
-        # For idx0 == T-1, force right boundary value Cp[-1]
         Cp_td = jnp.where(idx0 < T - 1, (1. - alpha) * Cp0 + alpha * Cp1, Cp[-1])
         return Cp_td
 

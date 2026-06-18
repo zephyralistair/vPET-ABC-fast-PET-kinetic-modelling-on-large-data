@@ -8,7 +8,7 @@ import jax.random as jr
 # Priors
 # ---------------------------------------------------------------------
 def TwoTissuePrior(
-        key: jr.KeyArray, 
+        key: jax.Array,
         n: int,
         lows: jnp.ndarray = jnp.array([0., 0., 0., 0, 0.]),
         highs: jnp.ndarray = jnp.array([1., 1., 0.2, 0.2, 0.1])
@@ -40,7 +40,7 @@ def TwoTissuePrior(
     return params
 
 def lpntPETPrior(
-        key: jr.KeyArray, 
+        key: jax.Array,
         n: int,
         lows: jnp.ndarray = jnp.array([0., 0., 0., 0., 0., 0., 0.]),
         highs: jnp.ndarray = jnp.array([2., 1., 0.4, 0.4, 25., 45., 4.])
@@ -73,7 +73,7 @@ def lpntPETPrior(
     return params
 
 def OneTissuePrior(
-        key: jr.KeyArray,
+        key: jax.Array,
         n: int,
         lows: jnp.ndarray = jnp.array([0.0, 0.0]),   # [K1, k2]
         highs: jnp.ndarray = jnp.array([1.5, 1.0])
@@ -119,7 +119,7 @@ def SRTMPrior(
     return params
 
 def AATHPrior(
-        key: jr.KeyArray,
+        key: jax.Array,
         n: int,
         lows: jnp.ndarray = jnp.array([0., 0., 0., 0, 0.]),
         highs: jnp.ndarray = jnp.array([1., 1., 0.2, 0.2, 0.1])
